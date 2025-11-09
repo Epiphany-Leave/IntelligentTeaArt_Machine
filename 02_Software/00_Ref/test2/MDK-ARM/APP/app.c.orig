@@ -1,0 +1,126 @@
+#include "app.h"
+
+/* LCD多级菜单 */
+Menu table[100] = 
+{
+	{0,1,(*jm10)},/*当前界面编号0，按下按键1，跳转到jm10*/
+	{0,2,(*jm10)},/*当前界面编号0，按下按键2，跳转到jm10*/
+	{1,2,(*jm11)},/*当前界面编号1，按下按键2，跳转到jm11*/
+	{2,2,(*jm12)},	
+	{3,2,(*jm13)},
+	{4,2,(*jm10)},		
+	{4,1,(*jm0)},	
+	{1,1,(*jm21)},
+	{5,1,(*jm10)},	
+	{2,1,(*jm22)},
+	{6,1,(*jm11)},
+	{3,1,(*jm23)},
+	{7,1,(*jm12)},	
+	{0xff,0x00,0},/*oxff作为一个标志位*/
+};
+
+uint8_t g_PageNum;//定义的界面编号
+ 
+void jm0(void)
+{
+	uint8_t tac[]={":2051100225"};
+g_PageNum=0;//界面0
+LCD_ShowChinese(50,40,"测试仪",RED,BLUE,16,0);
+LCD_ShowChinese(15,16,"欢迎使用电能参数",RED,BLUE,16,0);
+LCD_ShowChinese(0,94,"姓名",RED,BLUE,16,0);	
+LCD_ShowString(33,94,":",RED,BLUE,16,0);
+	LCD_ShowChinese(49,94,"龚其斌",RED,BLUE,16,0);
+LCD_ShowChinese(0,110,"学号",RED,BLUE,16,0);
+LCD_ShowString(32,110,tac,RED,BLUE,16,0);
+}
+void jm10(void)
+{
+ g_PageNum=1;//界面1
+ LCD_ShowString(0,10,"1:",RED,BLUE,16,0);
+ LCD_ShowString(0,40,"2:",RED,BLUE,16,0);
+ LCD_ShowString(0,70,"3:",RED,BLUE,16,0);
+ LCD_ShowString(0,100,"4:",RED,BLUE,16,0);
+ LCD_ShowChinese(20,10,"直流参数显示",RED,BLACK,16,0);
+ LCD_ShowChinese(20,40,"交流参数显示",RED,BLUE,16,0);
+ LCD_ShowString(20,70,"WIFI-",RED,BLUE,16,0);
+ LCD_ShowChinese(60,70,"连接",RED,BLUE,16,0);
+ LCD_ShowChinese(20,100,"返回",RED,BLUE,16,0);
+}
+void jm11(void)
+{
+ g_PageNum=2;//界面2
+ LCD_ShowString(0,10,"1:",RED,BLUE,16,0);
+ LCD_ShowString(0,40,"2:",RED,BLUE,16,0);
+ LCD_ShowString(0,70,"3:",RED,BLUE,16,0);
+ LCD_ShowString(0,100,"4:",RED,BLUE,16,0);
+ LCD_ShowChinese(20,10,"直流参数显示",RED,BLUE,16,0);
+ LCD_ShowChinese(20,40,"交流参数显示",RED,BLACK,16,0);
+ LCD_ShowString(20,70,"WIFI-",RED,BLUE,16,0);
+ LCD_ShowChinese(60,70,"连接",RED,BLUE,16,0);
+ LCD_ShowChinese(20,100,"返回",RED,BLUE,16,0);
+}
+void jm12(void)
+{
+ g_PageNum=3;
+ LCD_ShowString(0,10,"1:",RED,BLUE,16,0);
+ LCD_ShowString(0,40,"2:",RED,BLUE,16,0);
+ LCD_ShowString(0,70,"3:",RED,BLUE,16,0);
+ LCD_ShowString(0,100,"4:",RED,BLUE,16,0);
+ LCD_ShowChinese(20,10,"直流参数显示",RED,BLUE,16,0);
+ LCD_ShowChinese(20,40,"交流参数显示",RED,BLUE,16,0);
+ LCD_ShowString(20,70,"WIFI-",RED,BLACK,16,0);
+ LCD_ShowChinese(60,70,"连接",RED,BLACK,16,0);
+ LCD_ShowChinese(20,100,"返回",RED,BLUE,16,0);	
+}
+void jm13(void)
+{
+ g_PageNum=4;
+ LCD_ShowString(0,10,"1:",RED,BLUE,16,0);
+ LCD_ShowString(0,40,"2:",RED,BLUE,16,0);
+ LCD_ShowString(0,70,"3:",RED,BLUE,16,0);
+ LCD_ShowString(0,100,"4:",RED,BLUE,16,0);
+ LCD_ShowChinese(20,10,"直流参数显示",RED,BLUE,16,0);
+ LCD_ShowChinese(20,40,"交流参数显示",RED,BLUE,16,0);
+ LCD_ShowString(20,70,"WIFI-",RED,BLUE,16,0);
+ LCD_ShowChinese(60,70,"连接",RED,BLUE,16,0);
+ LCD_ShowChinese(20,100,"返回",RED,BLACK,16,0);	
+}
+void jm21(void)
+{
+ 
+ uint8_t com3[]={"I:          A"};
+ uint8_t com4[]={"U:          V"}; 
+ uint8_t com5[]={"P:          W"};
+ g_PageNum=5;
+ LCD_ShowChinese(30,0,"直流参数显示",RED,BLUE,16,0);
+ LCD_ShowString(0,20,com3,RED,WHITE,24,0);
+ LCD_ShowString(0,60,com4,RED,WHITE,24,0);
+ LCD_ShowString(0,100,com5,RED,WHITE,24,0);
+}
+void jm22(void)
+{
+ 
+ uint8_t com1[]={"I:                A"};
+ uint8_t com2[]={"U:                V"};
+ uint8_t com3[]={"cosx:              "};
+ uint8_t com4[]={"P1:               W"};
+ uint8_t com5[]={"P2:               W"};
+ uint8_t com6[]={"W:             KW/H"};
+ g_PageNum=6;
+ LCD_ShowChinese(30,0,"交流参数显示",RED,BLUE,16,0);
+ LCD_ShowString(0,17,com1,RED,WHITE,16,0);
+ LCD_ShowString(0,34,com2,RED,WHITE,16,0);
+ LCD_ShowString(0,51,com3,RED,WHITE,16,0); 
+ LCD_ShowString(0,68,com4,RED,WHITE,16,0);
+ LCD_ShowString(0,85,com5,RED,WHITE,16,0);
+ LCD_ShowString(0,102,com6,RED,WHITE,16,0); 
+}
+void jm23(void)
+{
+ uint8_t com1[]={"OFF/ON"};
+ g_PageNum=7;
+ LCD_ShowString(50,0,"WIFI-",RED,BLUE,16,0);
+ LCD_ShowChinese(90,0,"连接",RED,BLUE,16,0);
+ LCD_ShowString(35,37,com1,RED,WHITE,32,0); 
+}
+

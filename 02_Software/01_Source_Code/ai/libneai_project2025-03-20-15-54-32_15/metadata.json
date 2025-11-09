@@ -1,0 +1,102 @@
+{
+    "algorithm_type": "classifier",
+    "class_names": [
+        "air",
+        "Tea"
+    ],
+    "commit": "bb711f54",
+    "compilation_date": "2025-06-11T03:31:39.104622",
+    "compilation_flags": {
+        "float_abi": "soft",
+        "fshort_enums": true,
+        "short_wchar": true
+    },
+    "compilation_str": "{'compilation_dict':{'request_type':'library','api':{'env':'PROD','version':'v3'},'version':{'web_api':{'env':'PROD','version':'v3'},'local_api':{'version':'2025.04.04.1','platform':'win64'},'studio':'5.0.2'},'compilation_flags':{'float_abi':'soft','short_wchar':true,'fshort_enums':true,'use_knowledge':false},'mcu':'cortex-m4_stmicroelectronics_stm32g4-series','sensor':'multiGeneric','request_origin':'manual','algorithm_type':'classifier','lib_version':'v2_bb711f5','info':{'progression':{'evals_done':524,'optimization_progress':0.00262,'elapsed_time':95,'cpu_info':{'cpu_nb_cores':12,'cpu_nb_cores_for_optimization':9},'state':'paused'},'max_ram':32000,'max_flash':512000,'optimization_global_id':'cbb5a6b75700e9e621f489de9d23330e','version':{'local_api':'2025.04.04.1','studio':'5.0.2'},'creation_date':'2025-06-11T02:40:10+00:00'},'class_names':'air,Tea','results':[{'result_id':196,'combination':[0,[5,1,23,10,24,3,4,15,14,7,8,20,2,9,25,26,12,13,18,17,22,6,0,16,21,11,19],27,0,8,32,3,1,0,5,2,0,0.0,0.0,1000000.0,0,0,0,0,0],'model':3,'performance':{'performance':{'score':0.9978,'precision':0.9996,'precision_confidence_interval':[0.9979,1.0]},'memory_usage':{'estimated_ram':200,'estimated_flash':108,'estimated_flash_knowledge':null}},'learning_min_lines':null,'knowledge_dat':'eNp7dVXH7oWkup3S2mzrCI9ga6l6jT2PlqXvefSy1vb8-hrbI8_L9rJoVO29X9N5mIHBwYGBYQEQMzgxMDTYM2ACRyS2A4qMSoknANyqGcI='}],'data':{'nb_cols':160,'nb_lines':[[{'file_type':'class','nb_lines':5000},{'file_type':'class','nb_lines':4998}]]},'only_emulators':false,'lock_type':100},'sign':54862,'license_key':'***'}",
+    "compile_emulators": true,
+    "compile_library": true,
+    "data": {
+        "nb_cols": 160,
+        "nb_lines": [
+            [
+                {
+                    "file_type": "class",
+                    "nb_lines": 5000
+                },
+                {
+                    "file_type": "class",
+                    "nb_lines": 4998
+                }
+            ]
+        ]
+    },
+    "gcc_version": "arm-none-eabi-gcc (Arm GNU Toolchain 13.2.rel1 (Build arm-13.7)) 13.2.1 20231009",
+    "learning_min_lines": null,
+    "lib_limited": false,
+    "library_id": "6848f89b5dc907eeffc1dcad",
+    "library_md5sum": "f8195e65287d6ea25f5bb8dc76e93719",
+    "mcu": "cortex-m4_stmicroelectronics_stm32g4-series",
+    "mcu_cpn": "",
+    "mcu_display_name": "STM32G4 Series - STMicroelectronics",
+    "mcu_family": "STM32G4 Series",
+    "mcu_group": "prod",
+    "mcu_type": "cortex-m4",
+    "mcu_vendor": "STMicroelectronics",
+    "memory_usage": {
+        "flash": 1001,
+        "ram": 183
+    },
+    "optimization_info": {
+        "creation_date": "2025-06-11T02:40:10+00:00",
+        "max_flash": 512000,
+        "max_ram": 32000,
+        "optimization_global_id": "cbb5a6b75700e9e621f489de9d23330e",
+        "progression": {
+            "cpu_info": {
+                "cpu_nb_cores": 12,
+                "cpu_nb_cores_for_optimization": 9
+            },
+            "elapsed_time": 95,
+            "evals_done": 524,
+            "optimization_progress": 0.00262,
+            "state": "paused"
+        },
+        "version": {
+            "local_api": "2025.04.04.1",
+            "studio": "5.0.2"
+        }
+    },
+    "performance": {
+        "memory_usage": {
+            "estimated_flash": 108,
+            "estimated_flash_knowledge": null,
+            "estimated_ram": 200
+        },
+        "performance": {
+            "precision": 0.9996,
+            "precision_confidence_interval": [
+                0.9979,
+                1.0
+            ],
+            "score": 0.9978
+        }
+    },
+    "request_type": "library",
+    "sensor": "multiGeneric",
+    "studio_info": {
+        "local_api": {
+            "platform": "win64",
+            "version": "2025.04.04.1"
+        },
+        "studio": "5.0.2",
+        "web_api": {
+            "env": "PROD",
+            "version": "v3"
+        }
+    },
+    "user_info": {
+        "company": "\u71d5\u5c71\u5927\u5b66",
+        "email": "452760553@qq.com",
+        "first_name": "\u53f6",
+        "last_name": "\u58a8\u6e0a"
+    }
+}

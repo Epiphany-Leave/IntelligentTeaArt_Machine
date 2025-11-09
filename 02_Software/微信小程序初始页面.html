@@ -1,0 +1,194 @@
+/* 通用样式 */
+.page-container {
+  padding: 36rpx;
+}
+
+.header-container{
+  background-color: #3d7ef9;
+  color: #fff;
+  border-radius: 36rpx;
+  padding: 32rpx 64rpx;
+}
+.header-container .header-1{
+  display: flex;
+  justify-content: space-between;
+  font-size: 28rpx;
+}
+.header-container .header-2{
+  display: flex;
+  justify-content: space-between;
+  font-size: 64rpx;
+}
+.header-container .header-3{
+  margin-top: 36rpx;
+  font-size: 24rpx;
+}
+
+/* 数据项通用样式 */
+.data-container,
+.light-control-container {
+  margin-top: 36rpx;
+  display: grid;
+  justify-content: center;
+  grid-template-columns: repeat(auto-fill, 300rpx);
+  grid-gap: 36rpx;
+}
+
+.data-item {
+  position: relative;
+  background-color: #fff;
+  height: 180rpx;
+  box-shadow: #d6d6d6 0 0 8rpx;
+  border-radius: 36rpx;
+  display: flex;
+  justify-content: space-between;
+}
+
+.data-item .data-text {
+  position: absolute;
+  top: 36rpx;
+  right: 24rpx;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.data-item .data-picture {
+  position: absolute;
+  height: 96rpx;
+  width: 96rpx;
+  left: 16rpx;
+  top: 16rpx;
+}
+
+.data-item .data-title {
+  font-size: 28rpx;
+  color: #7f7f7f;
+}
+
+.data-item .data-value {
+  font-size: 52rpx;
+  font-weight: bold;
+  color: #7f7f7f;
+}
+
+/* 特定数据项样式 */
+.light-control-container {
+  grid-template-columns: repeat(auto-fill, 635rpx);
+}
+
+.light-control-container .data-item .data-text {
+  width: 75%;
+  text-align: center;
+}
+
+
+
+
+
+<!-- index.wxml -->
+<view class="page-container">
+<!-- 头部天气 -->
+<view class="header-container">
+    <view class="header-1">
+      <view>空气质量</view>
+      <view>气温</view>
+      <view>河北-秦皇岛市</view>
+    </view>
+    <view class="header-2">
+      <view>56良</view>
+      <view>0℃</view>
+      <view>晴</view>
+    </view>
+    <view class="header-3">
+      <view>少出门，多穿衣，注保暖</view>
+    </view>
+  </view>
+
+  <!-- 中间数据 -->
+  <view class="data-container">
+    <!-- 数据项：设备状态 -->
+    <view class="data-item device-status">
+      <image src="/图片/设备状态.png" class="data-picture"/>
+      <view class="data-text">
+        <view class="data-title">设备状态</view>
+        <view class="data-value" wx:if="{{device_status.data.list[0].status == 1}}">在线</view>
+        <view class="data-value" wx:elif="{{device_status.data.list[0].status != 1}}" style="color: red;">离线</view>
+      </view>
+    </view>
+
+    <!-- 数据项：传感器状态 -->
+    <view class="data-item sensor-status">
+      <image src="/图片/传感器.png" class="data-picture"/>
+      <view class="data-text">
+        <view class="data-title">传感器状态</view>
+        <view class="data-value" wx:if="{{onenet_data.data[5].value == 0}}">正常</view>
+        <view class="data-value" wx:elif="{{onenet_data.data[5].value != 0}}" style="color: red;">异常</view>
+      </view>
+    </view>
+
+    <!-- 数据项：环境温度 -->
+    <view class="data-item environment-temperature">
+      <image src="/图片/温度.png" class="data-picture"/>
+      <view class="data-text">
+        <view class="data-title">水温</view>
+        <view class="data-value">{{onenet_data.data[4].value}}℃</view>
+      </view>
+    </view>
+
+    <!-- 数据项：环境湿度 -->
+    <view class="data-item environment-humidity">
+      <image src="/图片/湿度.png" class="data-picture"/>
+      <view class="data-text">
+        <view class="data-title">流量</view>
+        <view class="data-value">{{onenet_data.data[5].value}}%</view>
+      </view>
+    </view>
+
+    <!-- 数据项：预热开关 -->
+    <view class="data-item humidifier-switch">
+      <image src="/图片/预热.png" class="data-picture"/>
+      <view class="data-text">
+        <view class="data-title">预热</view>
+        <view class="data-value">
+          <switch checked="{{switch1_checked}}" bindchange="onenet_set_device_property" data-param="cooktea_status" color="#3d77ff"/>
+        </view>
+      </view>
+    </view>
+
+    <!-- 数据项：清洗开关 -->
+    <view class="data-item curtain-switch">
+      <image src="/图片/清洗.png" class="data-picture"/>
+      <view class="data-text">
+        <view class="data-title">清洗</view>
+        <view class="data-value">
+          <switch checked="{{switch1_checked}}" bindchange="onenet_set_device_property" data-param="clean_status" color="#3d77ff"/>
+        </view>
+      </view>
+    </view>
+  </view>
+
+    <!-- 数据项：煮茶开关 -->
+    <view class="data-item humidifier-switch">
+      <image src="/图片/煮茶.png" class="data-picture"/>
+      <view class="data-text">
+        <view class="data-title">启动煮茶</view>
+        <view class="data-value">
+          <switch checked="{{switch3_checked}}" bindchange="onenet_set_device_property" data-param="maketea_status" color="#3d77ff"/>
+        </view>
+      </view>
+    </view>
+
+
+  <!-- 灯光亮度控制 -->
+  <!-- <view class="light-control-container">
+    <view class="data-item light-brightness">
+      <image src="/图片/灯.png" class="data-picture"/>
+      <view class="data-text">
+        <view class="data-title">灯光亮度</view>
+        <view class="data-value">
+          <slider min="0" max="100" step="1" value="{{switch5_checked}}" bindchange="onenet_set_device_property" data-param="DiaoDeng_Control" show-value/>
+        </view>
+      </view>
+    </view>
+  </view> -->
+</view>

@@ -1,0 +1,53 @@
+#include "motor.h"
+
+void pwm_test(void)// pwm波发送测试函数
+{
+    if (HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1) != HAL_OK)//开启TIM1的CH1通道产生PWM
+      {
+        Error_Handler();
+      }
+    if (HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1) != HAL_OK)//开启TIM1的CH1N通道产生PWM
+      {
+        Error_Handler();
+      } 
+}
+
+void SetMotorSpeed(uint8_t dutyCycle) 
+{
+    // 确保占空比在0到100之间
+    if (dutyCycle > 100) {
+        dutyCycle = 100;
+    }
+    
+    // 计算CCR值
+//    uint32_t ccrValue = (uint32_t)(((uint64_t)dutyCycle * (TIM1->ARR + 1)) / 100);
+	uint32_t ccrValue = (uint32_t)(((uint64_t)dutyCycle * htim1.Init.Period) / 100);
+    
+    // 设置TIM1的CCR1值来改变占空比
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ccrValue);
+}
+
+void Motor_Direction(MOTOR_DIRECTION direction, uint8_t speed)
+{
+	switch(direction)
+	{
+		case Forward:
+		{
+			    // speed 为0-100范围的占空比
+    Set_PWM_DutyCycle(speed);
+    // 确保方向是正转的设置（由硬件电路决定方向）
+    HAL_GPIO_WritePin(DIR_GPIO_Port, DIR_Pin, GPIO_PIN_SET);  // 根据电路设置方向引脚
+		}break;
+		
+		case Reverse:
+		{
+			    // speed 为0-100范围的占空比
+    Set_PWM_DutyCycle(speed);
+    // 确保方向是反转的设置
+    HAL_GPIO_WritePin(DIR_GPIO_Port, DIR_Pin, GPIO_PIN_RESET);  // 根据电路设置方向引脚
+		}break;
+	}
+
+}
+
+

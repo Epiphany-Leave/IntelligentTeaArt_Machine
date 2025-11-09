@@ -1,0 +1,115 @@
+#include "pwm_driver.h"
+#include "pwm_bsp.h"
+#include "tim.h"
+
+#include <math.h>
+
+ServoControl servoControls[MAX_SERVOS]; 
+
+/**
+***********************************************************************
+* @brief:      adc_driver_init(void)
+* @param:		   void
+* @retval:     void
+* @details:    
+***********************************************************************
+**/
+void pwm_driver_init(void)
+{
+//	pwm_bsp_init();
+	pwm_start();
+	
+	// 初始化舵机控制结构体
+	memset(servoControls, 0, sizeof(servoControls));
+}
+
+// 通用角度转CCR值函数（适用于定时器ARR=20000的配置）
+uint16_t angle_to_ccr(float angle) 
+{
+    return ((angle / 180 * 2000) + 500);  // 0°→500，180°→2500（对应0.5ms-2.5ms）
+}
+
+// 控制指定舵机的角度
+// 示例调用：
+// set_servo_angle(&htim2, TIM_CHANNEL_1, 90);  // 舵机1设为90°
+// set_servo_angle(&htim3, TIM_CHANNEL_3, 45);  // 舵机6设为45°
+void Servo_SetAngle(TIM_HandleTypeDef *htim, uint32_t channel, float angle) 
+{	
+    uint16_t ccr = angle_to_ccr(angle);
+    __HAL_TIM_SET_COMPARE(htim, channel, ccr);
+}
+
+// 查询舵机状态
+uint8_t Servo_IsMoving(TIM_HandleTypeDef *htim, uint32_t channel)
+{
+    for(int i=0; i<MAX_SERVOS; i++) 
+	{
+        if(servoControls[i].htim == htim && 
+           servoControls[i].channel == channel) 
+		{
+            return servoControls[i].is_moving;
+        }
+    }
+    return 0;
+}
+
+// 立即设置舵机角度（跳过缓动）
+void Servo_SetInstantAngle(TIM_HandleTypeDef *htim, uint32_t channel, float angle)
+{
+    for(int i=0; i<MAX_SERVOS; i++) {
+        if(servoControls[i].htim == htim && 
+           servoControls[i].channel == channel) {
+            servoControls[i].current_angle = angle;
+            servoControls[i].is_moving = 0;
+        }
+    }
+    uint16_t ccr = angle_to_ccr(angle);
+    __HAL_TIM_SET_COMPARE(htim, channel, ccr);
+}
+
+/**
+  * @brief  舵机缓动
+  * @param  htim：定时器句柄，channel：定时器通道，target_angle目标角度，duration_ms：运动时间
+  * @retval 成功返回：1，失败返回：0
+  */
+uint8_t Servo_StartSmoothMove(TIM_HandleTypeDef *htim, uint32_t channel, 
+                             float target_angle, uint16_t duration_ms)
+{
+    // 查找空闲控制位或相同舵机实例
+    int slot = -1;
+    for(int i=0; i<MAX_SERVOS; i++) {
+        if(servoControls[i].htim == htim && 
+           servoControls[i].channel == channel) {
+            slot = i;
+            break;
+        }
+        if(servoControls[i].htim == NULL && slot == -1) {
+            slot = i;
+        }
+    }
+    if(slot == -1) return 0;  // 无可用槽位
+    
+    // 获取当前角度（如果是新实例则初始化）
+    float current_angle = 0;
+    if(servoControls[slot].htim != NULL) {
+        current_angle = servoControls[slot].current_angle;
+    } else {
+        current_angle = (target_angle - 90) * 2;  // 初始中间值
+    }
+    
+    // 设置运动参数
+    servoControls[slot].htim = htim;
+    servoControls[slot].channel = channel;
+    servoControls[slot].current_angle = current_angle;
+    servoControls[slot].target_angle = target_angle;
+    servoControls[slot].step_per_tick = (target_angle - current_angle) / duration_ms;
+    servoControls[slot].is_moving = 1;
+    
+    return 1;
+}
+
+
+
+
+
+

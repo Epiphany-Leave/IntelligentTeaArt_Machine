@@ -1,0 +1,24 @@
+*.o
+*.obj
+*.elf
+*.bin
+*.hex
+*.map
+*.lst
+*.d
+*.axf
+*.iex
+*.dep
+*.dbg
+*.crf
+*.htm
+*.inp
+*.sct
+*.pbd
+*.pbw
+*.pbi
+*.browse
+
+# IDE
+*.uvgui.*
+*.uvguix.*

@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.py": "python",
+        "lcd_driver.h": "c"
+    }
+}

@@ -1,0 +1,125 @@
+<view class="page-container">
+  <!-- 头部天气模块 -->
+  <view class="header-container">
+    <view class="header-1">
+      <view>空气质量 · {{weatherData.quality || '良'}}</view>
+      <view>室外温度</view>
+      <view>{{weatherData.city || '河北-秦皇岛市'}}</view>
+    </view>
+    
+    <view class="header-2">
+      <view>
+        <text style="font-size: 64rpx">{{weatherData.aqi || '56'}}</text>
+        <text style="font-size: 36rpx">AQI</text>
+      </view>
+      <view>
+        <text style="font-size: 64rpx">{{weatherData.temp || '0'}}</text>
+        <text style="font-size: 36rpx">℃</text>
+      </view>
+      <view>{{weatherData.condition || '晴🌤'}}</view>
+    </view>
+    
+    <view class="header-3">
+      <view>{{weatherData.suggestion || '今日建议：少出门，多穿衣，注意保暖'}}</view>
+    </view>
+  </view>
+
+  <!-- 数据仪表盘 -->
+  <view class="data-container">
+    <!-- 设备状态卡片 -->
+    <view class="data-item">
+      <image src="/图片/设备状态.png" class="data-picture"/>
+      <view class="data-text">
+        <view class="data-title">设备状态</view>
+        <view class="data-value" wx:if="{{device_status.data.list[0].status == 1}}">在线</view>
+        <view class="data-value" wx:else style="color: var(--error-color)">离线</view>
+      </view>
+    </view>
+
+    <!-- 传感器状态卡片 -->
+    <view class="data-item">
+      <image src="/图片/传感器.png" class="data-picture"/>
+      <view class="data-text">
+        <view class="data-title">传感器状态</view>
+        <view class="data-value" wx:if="{{onenet_data.data[4].value == 0}}">正常</view>
+        <view class="data-value" wx:else style="color: var(--error-color)">异常</view>
+      </view>
+    </view>
+
+    <!-- 水温卡片 -->
+    <view class="data-item">
+      <image src="/图片/温度.png" class="data-picture"/>
+      <view class="data-text">
+        <view class="data-title">实时水温</view>
+        <view class="data-value">{{onenet_data.data[4].value}}℃</view>
+      </view>
+    </view>
+
+    <!-- 流量卡片 -->
+    <view class="data-item">
+      <image src="/图片/湿度.png" class="data-picture"/>
+      <view class="data-text">
+        <view class="data-title">当前流量</view>
+        <view class="data-value">{{onenet_data.data[5].value}}%</view>
+      </view>
+    </view>
+
+    <!-- 控制类卡片 -->
+    <view class="data-item">
+      <image src="/图片/预热.png" class="data-picture"/>
+      <view class="data-text">
+        <view class="data-title">预热控制</view>
+        <view class="data-value">
+          <switch checked="{{switch1_checked}}" 
+                 bindchange="onenet_set_device_property" 
+                 data-param="cooktea_status"/>
+        </view>
+      </view>
+    </view>
+
+    <view class="data-item">
+      <image src="/图片/清洗.png" class="data-picture"/>
+      <view class="data-text">
+        <view class="data-title">自动清洗</view>
+        <view class="data-value">
+          <switch checked="{{switch2_checked}}" 
+                 bindchange="onenet_set_device_property" 
+                 data-param="clean_status"/>
+        </view>
+      </view>
+    </view>
+
+    <!-- 全幅操作卡片 -->
+    <view class="data-item tea-card">
+      <image src="/图片/煮茶.png" class="data-picture"/>
+      <view class="tea-content">
+        <view class="tea-text">
+          <text class="data-title">启动煮茶</text>
+          <text class="tea-status">{{switch3_checked ? '运行中' : '已关闭'}}</text>
+        </view>
+        <switch 
+          checked="{{switch3_checked}}" 
+          bindchange="onenet_set_device_property" 
+          data-param="maketea_status"
+          class="tea-switch"
+        />
+      </view>
+    </view>
+
+    <view class="data-item tea-card">
+      <image src="/图片/添茶.png" class="data-picture"/>
+      <view class="tea-content">
+        <view class="tea-text">
+          <text class="data-title">启动添茶</text>
+          <text class="tea-status">{{switch4_checked ? '运行中' : '已关闭'}}</text>
+        </view>
+        <switch 
+          checked="{{switch4_checked}}" 
+          bindchange="onenet_set_device_property" 
+          data-param="addtea_status"
+          class="tea-switch"
+        />
+      </view>
+    </view>
+  </view>
+</view>
