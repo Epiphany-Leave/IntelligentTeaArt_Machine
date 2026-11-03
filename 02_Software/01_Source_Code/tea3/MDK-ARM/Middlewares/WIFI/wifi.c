@@ -1,43 +1,52 @@
 #include "wifi.h"
 
-/*C����ͷ�ļ�*/
+/*C语言头文件*/
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
 /**   
-  * @��Ҫ  	wifi��Ϣ��onenet��ƽ̨��Ʒ��Ϣ
-  * @ע��	��Ҫ�����Լ�����Ϣ��д������2.4GHzƵ�ε��������磬token����token���ɹ�����д��������  
+  * @简要  	wifi信息和onenet云平台产品信息
+  * @注意	以下配置默认留空，可通过构建环境的预处理宏注入；详见根目录 README。  
   */
-#define ONENET_MQTT_SET_ENABLE	1				//ʹ���������ù���  	1-����	0-�ر� 	�粻��ʹ���������ù��ܣ����Բ�ʹ��cJson�����ڴ濪�����Լ��ӿ������ٶ�
-#define WIFI_SSID "Ysx"					//WIFI�û���
-#define WIFI_PASSWORD "Ysx200423"				//WIFI����
-#define ONENET_MQTT_PRODUCT_ID "pOLtb0BC33"		//OneNET MQTT��ƷID
-#define ONENET_MQTT_DEVICE_NAME "test1"	//OneNET MQTT�豸����
-#define ONENET_MQTT_TOKEN "version=2018-10-31&res=products%2FpOLtb0BC33%2Fdevices%2Ftest1&et=2056760404&method=md5&sign=%2Buds%2BAvT%2BF6aB8riymIECQ%3D%3D"//�豸token		
-
-/**   
-  * @��Ҫ  	����onenet�Լ��·����ݺ��ϱ����ݵ�ATָ�
-  * @ע��	����һ��������ģ������Ҫ����ATָ��������������·���Ӧ��λ�ø��Ĳ��� 
-  */
-#define WIRELESS_WIFI_INFO "AT+CWJAP=\"" WIFI_SSID "\",\"" WIFI_PASSWORD "\"\r\n"		//ATָ�����2.4GHz wifi  
-//#define WIRELESS_WIFI_INFO "AT+CWJAP=\"112233\",\"2854961144\"\r\n"		//ATָ�����2.4GHz wifi  
-#define ONENET_MQTT_SERVER_INFO "AT+MQTTCONN=0,\"mqtts.heclouds.com\",1883,1\r\n"		//ATָ�����onenet��mqtt������
-#define ONENET_MQTT_USERCFG_INFO "AT+MQTTUSERCFG=0,1,\"" ONENET_MQTT_DEVICE_NAME "\",\"" ONENET_MQTT_PRODUCT_ID "\",\"" ONENET_MQTT_TOKEN "\",0,0,\"\"\r\n" 	//ATָ�����MQTT�ͻ��˵��û�����   
-#define ONENET_MQTT_PUBTOPIC "AT+MQTTPUBRAW=0,\"$sys/" ONENET_MQTT_PRODUCT_ID "/" ONENET_MQTT_DEVICE_NAME "/thing/property/post\""			//ATָ��豸�����ϱ����󣨷�����
-#define ONENET_MQTT_PUB_SET "AT+MQTTPUB=0,\"$sys/" ONENET_MQTT_PRODUCT_ID "/" ONENET_MQTT_DEVICE_NAME "/thing/property/set_reply\"" 	//ATָ��豸����������Ӧ��������
-#define ONENET_MQTT_REPLY_TOPIC "AT+MQTTSUB=0,\"$sys/" ONENET_MQTT_PRODUCT_ID "/" ONENET_MQTT_DEVICE_NAME "/thing/property/post/reply\",0\r\n"	//ATָ��豸�ϱ���Ӧ���󣨶��ģ�
-#if ONENET_MQTT_SET_ENABLE
-	#include "cJson.h"		//�����ʹ���������ã����Բ���cJson�ļ�����
-	#define ONENET_MQTT_SET_TOPIC "AT+MQTTSUB=0,\"$sys/" ONENET_MQTT_PRODUCT_ID "/" ONENET_MQTT_DEVICE_NAME "/thing/property/set\",0\r\n"	//ATָ��豸�����������󣨶��ģ�
-	#define ONENET_MQTT_REVEIVE_SET_TOPIC   "\"$sys/" ONENET_MQTT_PRODUCT_ID "/" ONENET_MQTT_DEVICE_NAME "/thing/property/set\""                  //����������������ж�
-	#define ONENET_MQTT_REVEIVE_REPLY_TOPIC "\"$sys/" ONENET_MQTT_PRODUCT_ID "/" ONENET_MQTT_DEVICE_NAME "/thing/property/post/reply\""           //�����ϱ���������ж�
+#define ONENET_MQTT_SET_ENABLE	1				//使能属性设置功能  	1-开启	0-关闭 	如不需使用属性设置功能，可以不使用cJson减少内存开销，以及加快运行速度
+#ifndef WIFI_SSID
+#define WIFI_SSID "" // 外部提供 2.4GHz Wi-Fi 名称；不要提交真实配置
+#endif
+#ifndef WIFI_PASSWORD
+#define WIFI_PASSWORD "" // 外部提供 Wi-Fi 密码；不要提交真实密码
+#endif
+#ifndef ONENET_MQTT_PRODUCT_ID
+#define ONENET_MQTT_PRODUCT_ID "" // 填写自己的 OneNET 产品 ID
+#endif
+#ifndef ONENET_MQTT_DEVICE_NAME
+#define ONENET_MQTT_DEVICE_NAME "" // 填写自己的 OneNET 设备名称
+#endif
+#ifndef ONENET_MQTT_TOKEN
+#define ONENET_MQTT_TOKEN "" // 外部提供设备级 OneNET MQTT token；不要提交真实 token
 #endif
 
 /**   
-  * @��Ҫ  	onenet��Ʒ�����Խṹ��
-  * @ע��	������Ҫ����onenet��Ʒ�д���������ֵ����������ʼ��OneNET_MQTT_Data�ṹ�����ݣ��������ͺ�����Ҫһ�� 
+  * @简要  	连接onenet以及下发数据和上报数据的AT指令集
+  * @注意	这里一般无需更改，如果需要其他AT指令参数，可以在下方对应的位置更改参数 
+  */
+#define WIRELESS_WIFI_INFO "AT+CWJAP=\"" WIFI_SSID "\",\"" WIFI_PASSWORD "\"\r\n"		//AT指令：连接2.4GHz wifi  
+#define ONENET_MQTT_SERVER_INFO "AT+MQTTCONN=0,\"mqtts.heclouds.com\",1883,1\r\n"		//AT指令：连接onenet的mqtt服务器
+#define ONENET_MQTT_USERCFG_INFO "AT+MQTTUSERCFG=0,1,\"" ONENET_MQTT_DEVICE_NAME "\",\"" ONENET_MQTT_PRODUCT_ID "\",\"" ONENET_MQTT_TOKEN "\",0,0,\"\"\r\n" 	//AT指令：配置MQTT客户端的用户参数   
+#define ONENET_MQTT_PUBTOPIC "AT+MQTTPUBRAW=0,\"$sys/" ONENET_MQTT_PRODUCT_ID "/" ONENET_MQTT_DEVICE_NAME "/thing/property/post\""			//AT指令：设备属性上报请求（发布）
+#define ONENET_MQTT_PUB_SET "AT+MQTTPUB=0,\"$sys/" ONENET_MQTT_PRODUCT_ID "/" ONENET_MQTT_DEVICE_NAME "/thing/property/set_reply\"" 	//AT指令：设备属性设置响应（发布）
+#define ONENET_MQTT_REPLY_TOPIC "AT+MQTTSUB=0,\"$sys/" ONENET_MQTT_PRODUCT_ID "/" ONENET_MQTT_DEVICE_NAME "/thing/property/post/reply\",0\r\n"	//AT指令：设备上报响应请求（订阅）
+#if ONENET_MQTT_SET_ENABLE
+	#include "cJson.h"		//如果不使用属性设置，可以不用cJson文件代码
+	#define ONENET_MQTT_SET_TOPIC "AT+MQTTSUB=0,\"$sys/" ONENET_MQTT_PRODUCT_ID "/" ONENET_MQTT_DEVICE_NAME "/thing/property/set\",0\r\n"	//AT指令：设备属性设置请求（订阅）
+	#define ONENET_MQTT_REVEIVE_SET_TOPIC   "\"$sys/" ONENET_MQTT_PRODUCT_ID "/" ONENET_MQTT_DEVICE_NAME "/thing/property/set\""                  //属性设置请求接收判断
+	#define ONENET_MQTT_REVEIVE_REPLY_TOPIC "\"$sys/" ONENET_MQTT_PRODUCT_ID "/" ONENET_MQTT_DEVICE_NAME "/thing/property/post/reply\""           //属性上报请求接收判断
+#endif
+
+/**   
+  * @简要  	onenet产品的属性结构体
+  * @注意	这里需要按照onenet产品中创建的属性值来创建并初始化OneNET_MQTT_Data结构体内容，数据类型和名称要一致 
   */
 //OneNET_MQTT_Data ChuangLian_Control = {"ChuangLian_Control", TYPE_BOOL, {.bool_value = W_FALSE}};
 //OneNET_MQTT_Data JiaShiQi_Control = {"JiaShiQi_Control", TYPE_BOOL, {.bool_value = W_FALSE}};
@@ -55,8 +64,8 @@ OneNET_MQTT_Data water           = {"water", TYPE_FLOAT, {.float_value = 0.0f}};
 
 
 /**   
-  * @��Ҫ  	onenet��Ʒ������ֵָ������������С
-  * @ע��	����ֻ���������ϱ�������������д��Ҫ�ϱ����ݵ����Խṹ��ָ��
+  * @简要  	onenet产品的属性值指针数组和数组大小
+  * @注意	这里只适用数据上报函数，这里填写需要上报数据的属性结构体指针
   */
 OneNET_MQTT_Data *onenet_data_array[] = {
 //    &ChuangLian_Control,
@@ -76,8 +85,8 @@ OneNET_MQTT_Data *onenet_data_array[] = {
 #define DATA_ARRAY_SIZE (sizeof(onenet_data_array) / sizeof(onenet_data_array[0]))
 
 /**   
-  * @��Ҫ  	�滻�ⲿ��������
-  * @ע��	�������ĺ���������Ҫ�滻���Լ��ĺ�������
+  * @简要  	替换外部函数名字
+  * @注意	这里后面的函数名字需要替换你自己的函数名字
   */
 #define wireless_serial_init    uart2_init
 #define wireless_delay_ms  		HAL_Delay			
@@ -85,24 +94,24 @@ OneNET_MQTT_Data *onenet_data_array[] = {
 #define wireless_log_print		printf				
 
 /**   
-  * @��Ҫ  	����ģ�鴮�ڽ������黺��
-  * @ע��	����ʵ�������޸Ļ����С
+  * @简要  	无线模块串口接收数组缓存
+  * @注意	根据实际需求修改缓存大小
   */
-#define RX_BUFFER_SIZE 328  //���黺���С
-uint8_t W_RxBuffer[RX_BUFFER_SIZE] = {0}; //���ջ�������
-uint16_t W_RxDataCnt = 0;	//�����±�
+#define RX_BUFFER_SIZE 328  //数组缓存大小
+uint8_t W_RxBuffer[RX_BUFFER_SIZE] = {0}; //接收缓存数组
+uint16_t W_RxDataCnt = 0;	//数组下标
 
 /**   
-  * @��Ҫ  	����ģ��״̬�ṹ��
-  * @ע��	��
+  * @简要  	无线模块状态结构体
+  * @注意	无
   */
 Wireless_TypeDef WirelessStatus = {0, 0};
 
 /**  
-  * @��Ҫ  �������ģ�黺���С
-  * @����  ��
-  * @ע��	��Ҫ�ڱ��ν������ݺ󣬲����������ݺ����������
-  * @����ֵ ��  
+  * @简要  清除无线模块缓存大小
+  * @参数  无
+  * @注意	需要在本次接收数据后，不再适用数据后，再清除缓存
+  * @返回值 无  
   */
 void wireless_clear_buffer(void)
 {
@@ -111,12 +120,12 @@ void wireless_clear_buffer(void)
 }
 
 /**   
-  * @��Ҫ  �ж�MQTT�������������
-  * @����  	��
-  * @ע��	���ӻ��߶Ͽ�mqtt������ʱ������ģ��Ĵ��ڻ��յ���������
-  * @����ʾ��  	1.mqtt�ָ����ӣ�+MQTTCONNECTED:0,1,"mqtts.heclouds.com","1883","",1
-				2.mqtt�Ͽ����ӣ�+MQTTDISCONNECTED:0
-  * @����ֵ mqtt������������� 
+  * @简要  判断MQTT服务器连接情况
+  * @参数  	无
+  * @注意	连接或者断开mqtt服务器时，无线模块的串口会收到下面数据
+  * @数据示例  	1.mqtt恢复连接：+MQTTCONNECTED:0,1,"mqtts.heclouds.com","1883","",1
+				2.mqtt断开连接：+MQTTDISCONNECTED:0
+  * @返回值 mqtt服务器连接情况 
   */
 uint8_t wireless_mqtt_connect_status(void)
 {
@@ -126,12 +135,12 @@ uint8_t wireless_mqtt_connect_status(void)
 }
 
 /**   
-  * @��Ҫ  �ж�wifi�������
-  * @����  	��
-  * @ע��	���ӻ��߶Ͽ�wifiʱ������ģ��Ĵ��ڻ��յ���������
-  * @����ʾ��  	1.wifi�ָ����ӣ�WIFI GOT IP
-				2.wifi�Ͽ����ӣ�WIFI DISCONNECT
-  * @����ֵ wifi������� 
+  * @简要  判断wifi连接情况
+  * @参数  	无
+  * @注意	连接或者断开wifi时，无线模块的串口会收到下面数据
+  * @数据示例  	1.wifi恢复连接：WIFI GOT IP
+				2.wifi断开连接：WIFI DISCONNECT
+  * @返回值 wifi连接情况 
   */
 uint8_t wireless_wifi_connect_status(void)
 {
@@ -141,10 +150,10 @@ uint8_t wireless_wifi_connect_status(void)
 }
 
 /**   
-  * @��Ҫ  ��ȡ����ģ�����ݽ��ձ�־λ
-  * @����  	��
-  * @ע��	����ģ�鴮�ڽ��յ����л��лس������ݺ󣬻����øñ�־λ
-  * @����ֵ 1-���� 	0-δ����  
+  * @简要  获取无线模块数据接收标志位
+  * @参数  	无
+  * @注意	无线模块串口接收到具有换行回车的数据后，会设置该标志位
+  * @返回值 1-接收 	0-未接收  
   */
 uint8_t wireless_get_receive_flag(void)
 {
@@ -154,90 +163,98 @@ uint8_t wireless_get_receive_flag(void)
 }
 
 /**  
-  * @��Ҫ  	����ģ�鴮�ڷ���ATָ��
-  * @����  	char *cmd��Ҫ���͵�ָ���ַ���
-			char *res�������ķ���ֵ�ַ������
-			uint8_t sendCount������ʹ���
-			uint8_t clear_buffer �Ƿ�������ջ���
-			uint16_t delay_xms��ÿ�η���ATָ���x������жϽ��
-			uint8_t printf_enable:ѡ���Ƿ��ӡ����ָ��
-  * @ע��	����ÿ��ATָ�����Ӧʱ����߾��ж���ظ���ATָ�ȥ��д�ʵ���delay_xms��ʱ����������wifi��ATָ���Ҫ��Լ2000ms�Լ���ظ�3��AT���ݣ�������д2000ms��ʱ�ȴ�
-  * @����ֵ 0��������Ԥ�ڽ�������
-			1������Ԥ�ڽ�������
+  * @简要  	无线模块串口发送AT指令
+  * @参数  	char *cmd：要发送的指令字符串
+			char *res：期望的返回值字符串结果
+			uint8_t sendCount：最大发送次数
+			uint8_t clear_buffer 是否清除接收缓存
+			uint16_t delay_xms：每次发送AT指令后x毫秒后判断结果
+			uint8_t printf_enable:选择是否打印本次指令
+  * @注意	根据每个AT指令的响应时间或者具有多个回复的AT指令，去填写适当的delay_xms延时，例如连接wifi的AT指令，需要大约2000ms以及会回复3个AT数据，可以填写2000ms延时等待
+  * @返回值 0：不符合预期接收数据
+			1：符合预期接收数据
   */
 uint8_t wireless_send_command(char *cmd, char *res, uint8_t sendCount, uint8_t clear_buffer, uint16_t delay_xms, uint8_t printf_enable)
 {
 	if(printf_enable == W_ENABLE) 
-		wireless_log_print("%s",cmd);		//������Դ�ӡÿ�η��͵�ָ��
+		wireless_log_print("%s",cmd);		//这里可以打印每次发送的指令
 	while(sendCount--)
 	{
 		
-		wireless_send_data(cmd);   //ATָ���
-		wireless_delay_ms(delay_xms);     //�ʵ����ӵ��ӳ٣��ȴ����ڽ������
-		if(wireless_get_receive_flag() == W_OK)                     //������ڽ��յ����лس�Ϊ��β������
+		wireless_send_data(cmd);   //AT指令发送
+		wireless_delay_ms(delay_xms);     //适当增加点延迟，等待串口接收完成
+		if(wireless_get_receive_flag() == W_OK)                     //如果串口接收到换行回车为结尾的数据
 		{  
 #if ONENET_MQTT_SET_ENABLE			
-			if(wireless_get_onenet_command_flag() == W_OK) {WirelessStatus.receiveDataFlag = 1;return 0;}    //���������ж��Ƿ�������������Ϣ�����ȼ���ߣ�ֱ���жϵ�ǰATָ��
+			if(wireless_get_onenet_command_flag() == W_OK) {WirelessStatus.receiveDataFlag = 1;return 0;}    //这里特殊判断是否有属性设置信息，优先级最高，直接中断当前AT指令
 #endif
-			if(strstr((const char *)W_RxBuffer, res) != NULL)		//���ҵ��ؼ���
+			if(strstr((const char *)W_RxBuffer, res) != NULL)		//若找到关键字
 			{		
 				if(clear_buffer == W_TRUE) 
-					wireless_clear_buffer();							//�������
-				return 1;                                           //�˳�������0-�ɹ�
+					wireless_clear_buffer();							//清除数组
+				return 1;                                           //退出，返回0-成功
 			}
-			wireless_log_print("error recovery data:%s",W_RxBuffer);      //�����մ���ʱ����ӡ�����յ����ݣ��������
+			// 含凭据的指令禁止记录原始响应，避免 AT 回显泄露密码或 token。
+			if(printf_enable == W_ENABLE) wireless_log_print("error recovery data:%s",W_RxBuffer);      //当接收错误时，打印出接收的数据，方便调试
 			if(clear_buffer == W_TRUE) wireless_clear_buffer();
 		}
 		wireless_delay_ms(500);
 	}
-	return 0;		//����1-ʧ��
+	return 0;		//返回1-失败
 }
 
 /**  
-  * @��Ҫ  ����ģ���ʼ��
-  * @����  	��
-  * @ע��	�����ʼ��Ч�������룬������Ӧ��������ATָ���Ƿ���ȷ���������ʵ��Ӵ�ATָ�����Ӧʱ����߷��ʹ���
-  * @����ֵ ��  
+  * @简要  无线模块初始化
+  * @参数  	无
+  * @注意	如果初始化效果不理想，或者响应错误，请检查AT指令是否正确，并可以适当加大AT指令的响应时间或者发送次数
+  * @返回值 无  
   */
 void wireless_init(void)
 {
-//	wireless_serial_init(115200);     //����ģ�鴮�ڳ�ʼ��
+	// 未配置时跳过联网，避免使用空值反复请求；不输出任何密码或 token。
+	if (WIFI_SSID[0] == '\0' || ONENET_MQTT_PRODUCT_ID[0] == '\0' ||
+		ONENET_MQTT_DEVICE_NAME[0] == '\0' || ONENET_MQTT_TOKEN[0] == '\0') {
+		WirelessStatus.error_code |= ERROR_WiFi_CONNECT | ERROR_MQTT_CONNECT;
+		wireless_log_print("Wi-Fi / OneNET 未配置，请按 README 提供本地配置。\r\n");
+		return;
+	}
+//	wireless_serial_init(115200);     //无线模块串口初始化
 	wireless_log_print("Start MQTT service\r\n");
-	//��λģ�飬�������״̬
+	//复位模块，清除所有状态
 	if(wireless_send_command("AT+RST\r\n", "", 5, W_TRUE, 500, W_ENABLE) != W_OK) 					WirelessStatus.error_code |= (1 << 0);
-	//�ر�ATָ����ԣ����ٽ��봮���жϵġ�\r\n���ж�	                                                                            
+	//关闭AT指令回显，减少进入串口中断的“\r\n”判断	                                                                            
 	if(wireless_send_command("ATE0\r\n", "OK", 5, W_TRUE, 50, W_ENABLE) != W_OK)					WirelessStatus.error_code |= (1 << 1);	
-	//����ģʽһ����������ΪWi-Fi�ͻ��ˣ�����������ӵ�����·����                                                                                                            
+	//设置模式一，配置它作为Wi-Fi客户端，让其可以连接到无线路由器                                                                                                            
 	if(wireless_send_command("AT+CWMODE=1\r\n", "OK", 5, W_TRUE, 50, W_ENABLE) != W_OK)				WirelessStatus.error_code |= (1 << 2);	
-	//����DHCP,�����ӵ�Wi-Fi����ʱ�ܹ��Զ����IP��ַ                                                                                                                  
+	//开启DHCP,在连接到Wi-Fi网络时能够自动获得IP地址                                                                                                                  
 	if(wireless_send_command("AT+CWDHCP=1,1\r\n", "OK", 5, W_TRUE, 50, W_ENABLE) != W_OK)			WirelessStatus.error_code |= (1 << 3);		
-	//����2.4GHz wifi                                                                                                             
-	if(wireless_send_command(WIRELESS_WIFI_INFO, "GOT IP", 5, W_TRUE, 2000, W_ENABLE) != W_OK) 		WirelessStatus.error_code |= (1 << 4) | ERROR_WiFi_CONNECT;		
-	//��������MQTT�ͻ��˵��û�����                                                                                                         
-	if(wireless_send_command(ONENET_MQTT_USERCFG_INFO, "OK", 5, W_TRUE, 50, W_ENABLE) != W_OK)		WirelessStatus.error_code |= (1 << 5);		
-	//����onenet��MQTT������                                                                                                          
+	//连接2.4GHz wifi                                                                                                             
+	if(wireless_send_command(WIRELESS_WIFI_INFO, "GOT IP", 5, W_TRUE, 2000, W_DISABLE) != W_OK) 		WirelessStatus.error_code |= (1 << 4) | ERROR_WiFi_CONNECT;		
+	//用于配置MQTT客户端的用户参数                                                                                                         
+	if(wireless_send_command(ONENET_MQTT_USERCFG_INFO, "OK", 5, W_TRUE, 50, W_DISABLE) != W_OK)		WirelessStatus.error_code |= (1 << 5);		
+	//连接onenet的MQTT服务器                                                                                                          
 	if(wireless_send_command(ONENET_MQTT_SERVER_INFO, "OK", 5, W_TRUE, 500, W_ENABLE) != W_OK) 		WirelessStatus.error_code |= (1 << 6) | ERROR_MQTT_CONNECT;		
-	//�����豸�����ϱ���Ӧ����	                                                                                                        
+	//订阅设备属性上报响应主题	                                                                                                        
 	if(wireless_send_command(ONENET_MQTT_REPLY_TOPIC, "OK", 5, W_TRUE, 50, W_ENABLE) != W_OK) 		WirelessStatus.error_code |= (1 << 7);
 #if ONENET_MQTT_SET_ENABLE	
-	//�����豸������������                                                                                                          
+	//订阅设备属性设置请求                                                                                                          
 	if(wireless_send_command(ONENET_MQTT_SET_TOPIC, "OK", 5, W_TRUE, 50, W_ENABLE) != W_OK) 		WirelessStatus.error_code |= (1 << 8);	
 #endif	
-	if(WirelessStatus.error_code == 0) 	//�������ATָ�û�д���
+	if(WirelessStatus.error_code == 0) 	//如果所有AT指令都没有错误
 	{
 		wireless_log_print("\r\n	!!!!!	MQTT service started successfully	!!!!!	\r\n\r\n");
 	}
-	else 		//����д���
+	else 		//如果有错误
 	{
 		wireless_log_print("\r\n	*****	MQTT service failed to start	******	\r\n\r\n");
-		wireless_error_handler(WirelessStatus.error_code);  //����������
+		wireless_error_handler(WirelessStatus.error_code);  //错误处理函数
 	}		
 }
 
 /**  
-  * @��Ҫ  ����ģ���ʼ������������
-  * @����  ErrorCode: �����룬��Ӧ�Ĵ���״̬  
-  * @����ֵ ��  
+  * @简要  无线模块初始化错误处理函数
+  * @参数  ErrorCode: 错误码，对应的错误状态  
+  * @返回值 无  
   */
 void wireless_error_handler(uint16_t error_code)
 {
@@ -246,8 +263,8 @@ void wireless_error_handler(uint16_t error_code)
 	if(error_code & (0x01 << 1))  wireless_log_print("2.ATE0\r\n\r\n");
 	if(error_code & (0x01 << 2))  wireless_log_print("3.AT+CWMODE=1\r\n\r\n");
 	if(error_code & (0x01 << 3))  wireless_log_print("4.AT+CWDHCP=1,1\r\n\r\n");
-	if(error_code & (0x01 << 4))  wireless_log_print("5.%s\r\n",WIRELESS_WIFI_INFO);
-	if(error_code & (0x01 << 5))  wireless_log_print("6.%s\r\n",ONENET_MQTT_USERCFG_INFO);
+	if(error_code & (0x01 << 4)) wireless_log_print("Wi-Fi 连接失败，请检查本地配置。\r\n");
+	if(error_code & (0x01 << 5)) wireless_log_print("MQTT 用户配置失败，请检查本地配置。\r\n");
 	if(error_code & (0x01 << 6))  wireless_log_print("7.%s\r\n",ONENET_MQTT_SERVER_INFO);
 	if(error_code & (0x01 << 7))  wireless_log_print("8.%s\r\n",ONENET_MQTT_REPLY_TOPIC);
 #if ONENET_MQTT_SET_ENABLE
@@ -257,10 +274,10 @@ void wireless_error_handler(uint16_t error_code)
 }
 
 /**  
-  * @��Ҫ  ����ģ��ϵͳ�¼���������
-  * @����  	��
-  * @ע��	��
-  * @����ֵ ��  
+  * @简要  无线模块系统事件处理函数
+  * @参数  	无
+  * @注意	无
+  * @返回值 无  
   */
 void wireless_system_handler(void)
 {
@@ -270,36 +287,36 @@ void wireless_system_handler(void)
 }
 
 /**  
-  * @��Ҫ  ����ģ��onenet��ƽ̨���ݴ���
-  * @����  	��
-  * @ע��	����ͳһ�޸��й�onenetƽ̨������ֵ��Ȼ��ͳһ�ϱ�����
-  * @����ֵ ��  
+  * @简要  无线模块onenet云平台数据处理
+  * @参数  	无
+  * @注意	这里统一修改有关onenet平台的属性值，然后统一上报数据
+  * @返回值 无  
   */
 void wireless_onenet_data_handler(void)
 { 
-//	ChuangLian_Control.value.bool_value = ChuangLian_status;       	//��ֵ��onenet��Ӧ������ֵ��ע�����Ե���������
-//	JiaShiQi_Control.value.bool_value = JiaShiQi_status;       		//��ֵ��onenet��Ӧ������ֵ��ע�����Ե���������
-//	DiaoDeng_Control.value.int_value = DiaoDeng_status;       		//��ֵ��onenet��Ӧ������ֵ��ע�����Ե���������
-//	temperature.value.float_value = dht11_data.temp;       			//��ֵ��onenet��Ӧ������ֵ��ע�����Ե���������
-//	humidity.value.float_value = dht11_data.humi;         			//��ֵ��onenet��Ӧ������ֵ��ע�����Ե���������
+//	ChuangLian_Control.value.bool_value = ChuangLian_status;       	//赋值给onenet对应的属性值，注意属性的数据类型
+//	JiaShiQi_Control.value.bool_value = JiaShiQi_status;       		//赋值给onenet对应的属性值，注意属性的数据类型
+//	DiaoDeng_Control.value.int_value = DiaoDeng_status;       		//赋值给onenet对应的属性值，注意属性的数据类型
+//	temperature.value.float_value = dht11_data.temp;       			//赋值给onenet对应的属性值，注意属性的数据类型
+//	humidity.value.float_value = dht11_data.humi;         			//赋值给onenet对应的属性值，注意属性的数据类型
 	
-	preheat_status.value.bool_value = preheat_flag;       	//��ֵ��onenet��Ӧ������ֵ��ע�����Ե���������
-	maketea_status.value.bool_value = maketea_flag;       	//��ֵ��onenet��Ӧ������ֵ��ע�����Ե���������
-  addtea_status.value.bool_value = addtea_flag;       	//��ֵ��onenet��Ӧ������ֵ��ע�����Ե���������
-	clean_status.value.bool_value = clean_flag;       		//��ֵ��onenet��Ӧ������ֵ��ע�����Ե���������
-//	temp.value.int_value = temperature;       				//��ֵ��onenet��Ӧ������ֵ��ע�����Ե���������
+	preheat_status.value.bool_value = preheat_flag;       	//赋值给onenet对应的属性值，注意属性的数据类型
+	maketea_status.value.bool_value = maketea_flag;       	//赋值给onenet对应的属性值，注意属性的数据类型
+  addtea_status.value.bool_value = addtea_flag;       	//赋值给onenet对应的属性值，注意属性的数据类型
+	clean_status.value.bool_value = clean_flag;       		//赋值给onenet对应的属性值，注意属性的数据类型
+//	temp.value.int_value = temperature;       				//赋值给onenet对应的属性值，注意属性的数据类型
 }
 
 /**   
-  * @��Ҫ  �����ϱ���onenet��ƽ̨
-  * @����  	��
-  * @ע��	����OneNET_MQTT_Data���������Խṹ�壬����ʹ��ָ�������װ��Ȼ��ͳһ�������ϱ���onenet��ƽ̨
-			����ᷢ������ATָ�����ݣ���һ����mqtt��ָ���ϱ�ATָ����ͺ���볤����ģʽ
-			�ڶ����Ƿ���json��ʽ�������ϱ���onenet��ƽ̨
-			��Ҫע��ڶ���ATָ����Ϻ�ĳ����Ƿ񳬳����黺���С
-  * @ʾ����	��һ��ATָ��:AT+MQTTPUBRAW=0,"$sys/HbJo2787Fn/device-001/thing/property/post",182,0,0
-			�ڶ���ATָ�{"id":"123","params":{"ChuangLian_Control":{"value":false},"JiaShiQi_Control":{"value":false},"sensor_status":{"value":0},"temperature":{"value":13.5},"humidity":{"value":39.0}}}
-  * @����ֵ ��  
+  * @简要  数据上报至onenet云平台
+  * @参数  	无
+  * @注意	根据OneNET_MQTT_Data创建的属性结构体，并且使用指针数组封装，然后统一处理后上报到onenet云平台
+			这里会发送两个AT指令数据，第一个是mqtt长指令上报AT指令，发送后进入长数据模式
+			第二个是发送json格式的数据上报至onenet云平台
+			需要注意第二个AT指令组合后的长度是否超出数组缓存大小
+  * @示例：	第一个AT指令:AT+MQTTPUBRAW=0,"$sys/HbJo2787Fn/device-001/thing/property/post",182,0,0
+			第二个AT指令：{"id":"123","params":{"ChuangLian_Control":{"value":false},"JiaShiQi_Control":{"value":false},"sensor_status":{"value":0},"temperature":{"value":13.5},"humidity":{"value":39.0}}}
+  * @返回值 无  
   */
 void wireless_publish_data(void) 
 {
@@ -311,8 +328,8 @@ void wireless_publish_data(void)
     char atCommand[AT_COMMAND_SIZE];
 	static uint8_t error_send_count = 0; 
 	
-    bufferPos += snprintf(globalBuffer + bufferPos, BUFFER_SIZE - bufferPos, "{\"id\":\"123\",\"params\":{"); // ƴ��JSON����
-    // ����ָ�����飬��������ƴ������
+    bufferPos += snprintf(globalBuffer + bufferPos, BUFFER_SIZE - bufferPos, "{\"id\":\"123\",\"params\":{"); // 拼接JSON数据
+    // 遍历指针数组，根据类型拼接数据
     for (unsigned char i = 0; i < DATA_ARRAY_SIZE; ++i) {
         switch (onenet_data_array[i]->type) {
             case TYPE_BOOL:
@@ -342,62 +359,62 @@ void wireless_publish_data(void)
         }
     }
 
-    // ƴ��JSON��β
+    // 拼接JSON结尾
     bufferPos += snprintf(globalBuffer + bufferPos, BUFFER_SIZE - bufferPos, "}}\r\n\r\n");
 
-    // ����ϱ����ݵ��ַ�������ڻ��棬��ӡ����
+    // 如果上报数据的字符数组大于缓存，打印报错
     if (bufferPos >= BUFFER_SIZE) {
-        // ������������ͨ����־��¼
+        // 处理错误，例如通过日志记录
         printf("\r\nERROR:publish_data buffer overflow\r\n");
         return;
     }
 
-    // ƴ�� AT ����
+    // 拼接 AT 命令
     atCommandPos += snprintf(atCommand + atCommandPos, AT_COMMAND_SIZE - atCommandPos,
                              "%s,%d,0,0\r\n", ONENET_MQTT_PUBTOPIC, (int)bufferPos);
 
-    // ��� AT �����Ƿ����
+    // 检查 AT 命令是否溢出
     if (atCommandPos >= AT_COMMAND_SIZE) {
         printf("\r\nERROR:atCommand buffer overflow\r\n");
         return;
     }
-	wireless_send_command(atCommand, "OK", 1, W_TRUE, 25, W_ENABLE);    // ���� AT ��������ϱ�������ģʽ
-    // ��������
+	wireless_send_command(atCommand, "OK", 1, W_TRUE, 25, W_ENABLE);    // 发送 AT 命令进入上报长数据模式
+    // 发送数据
     if (wireless_send_command(globalBuffer, "{\"id\":\"123\",\"code\":200,\"msg\":\"success\"}", 1, W_TRUE, 300, W_ENABLE) != W_OK) error_send_count++;
     else error_send_count = 0, WirelessStatus.error_code &= ~ERROR_PUBLISH;
    
-    if (error_send_count >= 5) WirelessStatus.error_code |= ERROR_PUBLISH; // �������ʧ�ܴ����ﵽ 5 �Σ����ô������
+    if (error_send_count >= 5) WirelessStatus.error_code |= ERROR_PUBLISH; // 如果连续失败次数达到 5 次，设置错误代码
 }
 
 #if ONENET_MQTT_SET_ENABLE
 
 /**   
-  * @��Ҫ  �жϽ��յ������Ƿ�������������Ϣ
-  * @����  	��
-  * @ע��	ֻ��Ҫ�ж϶�����Ϣ���ݣ�$sys/HbJo2787Fn/device-001/thing/property/set
-  * @����ʾ���� +MQTTSUBRECV:0,"$sys/HbJo2787Fn/device-001/thing/property/set",63,{"id":"4","version":"1.0","params":{"ChuangLian_Control":true}}
-  * @����ֵ �Ƿ�������������Ϣ  
+  * @简要  判断接收的数据是否是属性设置消息
+  * @参数  	无
+  * @注意	只需要判断订阅消息内容：$sys/HbJo2787Fn/device-001/thing/property/set
+  * @数据示例： +MQTTSUBRECV:0,"$sys/HbJo2787Fn/device-001/thing/property/set",63,{"id":"4","version":"1.0","params":{"ChuangLian_Control":true}}
+  * @返回值 是否是属性设置消息  
   */
 uint8_t wireless_get_onenet_command_flag(void)
 {
-	//�ж�����������������ݰ�
+	//判断如果是属性设置数据包
 	if(strstr((char *)W_RxBuffer, ONENET_MQTT_REVEIVE_SET_TOPIC) != NULL)	return W_OK;
 
 	return !W_OK;		
 }
 
 /**   
-  * @��Ҫ  �������ý�����Ϣ-��ȡid��
-  * @����  	char *jsonData��json����
-  * @ע��	����json��ʽ�����ݣ���Ҫ��ԭʼ���յ����ݷָ{��ǰ�������
-  * @����ʾ����{"id":"4","version":"1.0","params":{"ChuangLian_Control":true}}		
-  * @����ֵ ��ǰ����������Ϣ��id��  
+  * @简要  属性设置接收信息-提取id号
+  * @参数  	char *jsonData：json数据
+  * @注意	传入json格式的数据，需要将原始接收的数据分割‘{’前面的内容
+  * @参数示例：{"id":"4","version":"1.0","params":{"ChuangLian_Control":true}}		
+  * @返回值 当前属性设置信息的id号  
   */
 uint32_t wireless_get_command_id(char *jsonData)
 {
-	uint32_t cmd_id = 0;		//����һ��id���α���
+	uint32_t cmd_id = 0;		//定义一个id整形变量
 
-    cJSON *json_obj = cJSON_Parse(jsonData);  			// �ж�JSON�ַ����Ƿ�Ϸ�
+    cJSON *json_obj = cJSON_Parse(jsonData);  			// 判断JSON字符串是否合法
     if (json_obj == NULL) 			
 	{
         const char *error_ptr = cJSON_GetErrorPtr();	
@@ -408,27 +425,27 @@ uint32_t wireless_get_command_id(char *jsonData)
         return 0xFFFFFFFF;
     }
 
-    cJSON *id_item = cJSON_GetObjectItem(json_obj, "id");  // ��ȡid�ֶ�
+    cJSON *id_item = cJSON_GetObjectItem(json_obj, "id");  // 提取id字段
     if (cJSON_IsString(id_item) && (id_item->valuestring != NULL)) 
 	{
-		cmd_id = atoi(id_item->valuestring);		//��id�ַ���תΪ����
+		cmd_id = atoi(id_item->valuestring);		//将id字符串转为整形
     }
     
-    cJSON_Delete(json_obj);  // ����JSON����
+    cJSON_Delete(json_obj);  // 清理JSON对象
 
     return cmd_id;
 }
 
 /**   
-  * @��Ҫ  ��������������Ϣ-��ȡ��������
-  * @����  	char *jsonData��json����
-  * @ע��	��Ҫ���ݶ�Ӧ����������ִ�ж�Ӧ�Ľ���������cJSON_IsBool(cmd_item)����cJSON_IsNumbmer(cmd_item)
-  * @ʾ��  {"id":"4","version":"1.0","params":{"ChuangLian_Control":true}}
-  * @����ֵ ��  
+  * @简要  根据属性设置信息-提取命令内容
+  * @参数  	char *jsonData：json数据
+  * @注意	需要根据对应的数据类型执行对应的解析函数，cJSON_IsBool(cmd_item)或者cJSON_IsNumbmer(cmd_item)
+  * @示例  {"id":"4","version":"1.0","params":{"ChuangLian_Control":true}}
+  * @返回值 无  
   */
 void wireless_receiver_command_extract(char *jsonData)
 {
-	// ����ַ����Ƿ����json��ʽ
+	// 检测字符串是否符合json格式
 	cJSON *json_obj = cJSON_Parse(jsonData);
     if (json_obj == NULL) {
         const char *error_ptr = cJSON_GetErrorPtr();
@@ -438,7 +455,7 @@ void wireless_receiver_command_extract(char *jsonData)
         return ;
     }
 	
-	// ��ȡparams�ֶ�
+	// 提取params字段
     cJSON *params_item = cJSON_GetObjectItem(json_obj, "params");
     if (params_item == NULL) {
         wireless_log_print("Params not found\r\n");
@@ -448,7 +465,7 @@ void wireless_receiver_command_extract(char *jsonData)
 	
 	cJSON *cmd_item = NULL;
 	
-	// Ԥ�Ȳ���
+	// 预热操作
 	cmd_item  = cJSON_GetObjectItem(params_item, preheat_status.name);
 	if (cmd_item != NULL && cJSON_IsBool(cmd_item)) 
 	{
@@ -456,7 +473,7 @@ void wireless_receiver_command_extract(char *jsonData)
 		wireless_log_print("preheat_status.value:%d\r\n",preheat_status.value.bool_value);
 	}
 
-	// ������
+	// 煮茶操作
 	cmd_item  = cJSON_GetObjectItem(params_item, maketea_status.name);
 	if (cmd_item != NULL && cJSON_IsBool(cmd_item)) 
 	{
@@ -471,7 +488,7 @@ void wireless_receiver_command_extract(char *jsonData)
 		wireless_log_print("addtea_status.value:%u\r\n",addtea_status.value.bool_value);
 	}
 	
-	// ��ϴ����
+	// 清洗操作
 	cmd_item  = cJSON_GetObjectItem(params_item, clean_status.name);
 	if (cmd_item != NULL && cJSON_IsBool(cmd_item)) 
 	{
@@ -479,16 +496,16 @@ void wireless_receiver_command_extract(char *jsonData)
 		wireless_log_print("clean_status.value:%u\r\n",clean_status.value.bool_value);
 	}
 	
-	cJSON_Delete(json_obj);   //�ͷ��ڴ�
+	cJSON_Delete(json_obj);   //释放内存
 }
 
 /**   
-  * @��Ҫ  ���յ������������ݺ��Ӧ
-  * @����  	uint32_t respond_id����Ӧ��id
-			uint16_t code����Ӧ�Ĵ��룬Ĭ�ϣ�200
-			char *msg����Ӧ���ַ���Ĭ�ϣ�success
-  * @ע��	��Ҫ����APP����΢��С�����е���APIִ��HTTP����ʱ����Ҫ����ִ��״̬�ĳ���
-  * @����ֵ ��  
+  * @简要  接收到属性设置数据后回应
+  * @参数  	uint32_t respond_id：回应的id
+			uint16_t code：回应的代码，默认：200
+			char *msg：回应的字符，默认：success
+  * @注意	主要用于APP或者微信小程序中调用API执行HTTP操作时，需要返回执行状态的场景
+  * @返回值 无  
   */
 void wireless_receive_command_respond(uint32_t respond_id, uint16_t code, char *msg)
 {
@@ -500,10 +517,10 @@ void wireless_receive_command_respond(uint32_t respond_id, uint16_t code, char *
 }
 
 /**  
-  * @��Ҫ  ����ģ���������
-  * @����  	��
-  * @ע��	������ڽ��յ�����������Ϣ��ִ�к�����������ȡ���ָ�ִ�в�ͬ�Ĳ����������Ҫ�޸Ķ�Ӧ������ֵ
-  * @����ֵ ��  
+  * @简要  无线模块命令控制
+  * @参数  	无
+  * @注意	这里会在接收到属性设置信息后执行函数，根据提取后的指令，执行不同的操作，最后需要修改对应的数据值
+  * @返回值 无  
   */
 void wireless_command_control(void)
 {
@@ -530,36 +547,36 @@ void wireless_command_control(void)
 }
 
 /**   
-  * @��Ҫ  ����ģ�鴦�����յ���������������
-  * @����  	��
-  * @ע��	������תΪjson��ʽ��Ȼ����ȡid�ź�ָ������Ӧ��������
-			��Ҫ����APP����΢��С�����е���APIִ��HTTP����ʱ����Ҫ����ִ��״̬�ĳ���
-  * @ʾ����	ԭʼ���ݣ� +MQTTSUBRECV:0,"$sys/HbJo2787Fn/device-001/thing/property/set",63,{"id":"4","version":"1.0","params":{"ChuangLian_Control":true}}
-			תΪjson��ʽ��{"id":"4","version":"1.0","params":{"ChuangLian_Control":true}}
-			��ȡid��תΪ���Σ�4
-			��ȡ����params�� "ChuangLian_Control":true
-  * @����ֵ ��  
+  * @简要  无线模块处理接收到的属性设置数据
+  * @参数  	无
+  * @注意	将数据转为json格式，然后提取id号和指令，最后响应属性设置
+			主要用于APP或者微信小程序中调用API执行HTTP操作时，需要返回执行状态的场景
+  * @示例：	原始数据： +MQTTSUBRECV:0,"$sys/HbJo2787Fn/device-001/thing/property/set",63,{"id":"4","version":"1.0","params":{"ChuangLian_Control":true}}
+			转为json格式：{"id":"4","version":"1.0","params":{"ChuangLian_Control":true}}
+			提取id号转为整形：4
+			提取参数params： "ChuangLian_Control":true
+  * @返回值 无  
   */
 void wireless_processing_command(void)
 {
 		char *jsonData = NULL;
 		uint32_t cmd_id;
-		jsonData = strstr((const char*)W_RxBuffer, ONENET_MQTT_REVEIVE_SET_TOPIC);   //�Ƚ�ȡ���������ò��ֵ��ַ���
-		if(jsonData == NULL) strchr((const char*)W_RxBuffer, '{');	//��ȡjson����
-		else jsonData = strchr((const char*)jsonData, '{');	//��ȡjson����
-		wireless_log_print("jsonData:\r\n%s\r\n",jsonData);			//��ʾ���յ���json����
-		cmd_id = wireless_get_command_id(jsonData);					//��������id��
-		wireless_receiver_command_extract(jsonData);				//��ȡָ��		
-		wireless_receive_command_respond(cmd_id, 200, "success");	//��Ӧonenet	
+		jsonData = strstr((const char*)W_RxBuffer, ONENET_MQTT_REVEIVE_SET_TOPIC);   //先截取出属性设置部分的字符串
+		if(jsonData == NULL) strchr((const char*)W_RxBuffer, '{');	//提取json数据
+		else jsonData = strchr((const char*)jsonData, '{');	//提取json数据
+		wireless_log_print("jsonData:\r\n%s\r\n",jsonData);			//显示接收到的json数据
+		cmd_id = wireless_get_command_id(jsonData);					//获得命令的id号
+		wireless_receiver_command_extract(jsonData);				//提取指令		
+		wireless_receive_command_respond(cmd_id, 200, "success");	//回应onenet	
 }
 
 #endif
 
 /**   
-  * @��Ҫ  ����ģ�鴮�ڽ������ݴ�������
-  * @����  	��
-  * @ע��	�ڽ��յ����ݺ��ж���ʲô���ݣ����ݶ�Ӧ����ִ�ж�Ӧ�Ĳ������������������ݻ���
-  * @����ֵ ��  
+  * @简要  无线模块串口接收数据处理函数
+  * @参数  	无
+  * @注意	在接收到数据后，判断是什么内容，根据对应内容执行对应的操作，最后清除接收数据缓存
+  * @返回值 无  
   */
 void wireless_receive_data_handler(void)
 {
@@ -569,32 +586,32 @@ void wireless_receive_data_handler(void)
 	if(wireless_mqtt_connect_status() == !W_OK) WirelessStatus.error_code |= ERROR_MQTT_CONNECT,wireless_log_print("ERROR_MQTT_CONNECT:	MQTT DISCONNECT\r\n");    
 	else if(wireless_mqtt_connect_status() == W_OK) WirelessStatus.error_code &= ~ERROR_MQTT_CONNECT,wireless_log_print("+MQTTCONNECTED:0,1,\"mqtts.heclouds.com\",\"1883\",\"\",1\r\n");   
 #if ONENET_MQTT_SET_ENABLE
-	if(wireless_get_onenet_command_flag() == W_OK)	//�ж�����������
+	if(wireless_get_onenet_command_flag() == W_OK)	//判断是命令数据
 	{
-		wireless_processing_command();			//��������
-		wireless_command_control();				//ִ������
-		wireless_clear_buffer();				//�������ģ��������ݻ���
-		wireless_publish_data();				//ִ����ɺ�������
+		wireless_processing_command();			//处理数据
+		wireless_command_control();				//执行命令
+		wireless_clear_buffer();				//清除无线模块接收数据缓存
+		wireless_publish_data();				//执行完成后发送数据
 	}
 #endif
-	wireless_clear_buffer();		//�������ģ��������ݻ���	
+	wireless_clear_buffer();		//清除无线模块接收数据缓存	
 }
 
 /**  
-  * @��Ҫ  ����ģ����պ���
-  * @����  	uint8_t byte�����յ��ֽ�
-  * @ע��	��������ģ�鴮���ж��У��������봮�ڽ��յ��ֽ�
-  * @����ֵ ��  
+  * @简要  无线模块接收函数
+  * @参数  	uint8_t byte：接收的字节
+  * @注意	放在无线模块串口中断中，参数传入串口接收的字节
+  * @返回值 无  
   */
 void wireless_receive_callback(uint8_t byte)
 {
-	W_RxBuffer[W_RxDataCnt++] = byte;   //��������ת��
-	if(W_RxDataCnt > RX_BUFFER_SIZE) 	//�жϽ��������Ƿ����
+	W_RxBuffer[W_RxDataCnt++] = byte;   //接收数据转存
+	if(W_RxDataCnt > RX_BUFFER_SIZE) 	//判断接收数据是否溢出
 	{
 		wireless_clear_buffer();
 	}				
 	
-	if( W_RxDataCnt >= 2 && (W_RxBuffer[W_RxDataCnt - 2] == '\r' && W_RxBuffer[W_RxDataCnt - 1] == '\n') ) //�жϽ���λ
+	if( W_RxDataCnt >= 2 && (W_RxBuffer[W_RxDataCnt - 2] == '\r' && W_RxBuffer[W_RxDataCnt - 1] == '\n') ) //判断结束位
 	{	
 		WirelessStatus.receiveDataFlag = 1;
 	}

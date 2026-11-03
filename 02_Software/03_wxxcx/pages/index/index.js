@@ -50,9 +50,9 @@ Page({
    * @注意：定义与OneNET平台交互所需的配置信息，包括鉴权信息、产品ID、设备名称等。
    */
   config: {
-    auth_info: "version=2022-05-01&res=userid%2F377291&et=2056760404&method=sha1&sign=vLGBXrlJZEeU3v31Q8e0OgFP7ZY%3D", // 鉴权信息
-    product_id: "pOLtb0BC33", // 产品ID
-    device_name: "test1", // 设备名称
+    auth_info: "", // 本地提供 OneNET HTTP API 鉴权 token；不要提交真实值，生产环境改由服务端代理
+    product_id: "", // 填写自己的 OneNET 产品 ID，与固件配置一致
+    device_name: "", // 填写自己的 OneNET 设备名称，与固件配置一致
     api_base_url: "https://iot-api.heclouds.com", // OneNET API基础URL
     start_time: 0, // 开始时间，用于请求数据时间戳区间
     end_time: 0, // 结束时间，用于请求数据时间戳区间
@@ -63,7 +63,8 @@ Page({
    * 获取心知天气数据
    */
   fetchWeatherData() {
-    const API_KEY = 'SWO4k9omPvCKZ2kXH'; // 替换为你的API密钥
+    const API_KEY = ""; // 本地提供心知天气 API key；客户端无法保密，生产环境改由服务端代理
+    if (!API_KEY) return; // 未配置时不请求天气服务
     const location = 'qinhuangdao'; // 秦皇岛
     
     wx.request({
@@ -182,6 +183,7 @@ Page({
    */
   onenet_fetch_data() {
     const { api_base_url, product_id, device_name, auth_info } = this.config;
+    if (!auth_info || !product_id || !device_name) return; // 未配置时不发送 OneNET 请求
     wx.request({
       url: `${api_base_url}/thingmodel/query-device-property?product_id=${product_id}&device_name=${device_name}`,
       method: "GET",
@@ -231,6 +233,7 @@ Page({
    */
   onenet_fetch_device_status() {
     const { api_base_url, product_id, device_name, auth_info, start_time, end_time, limit } = this.config;
+    if (!auth_info || !product_id || !device_name) return; // 未配置时不发送 OneNET 请求
     wx.request({
       url: `${api_base_url}/device/status-history?product_id=${product_id}&device_name=${device_name}&start_time=${start_time}&end_time=${end_time}&limit=${limit}`,
       method: "GET",
@@ -260,6 +263,7 @@ Page({
     const param_name = event.currentTarget.dataset.param; // 获取自定义数据
     const is_checked = event.detail.value; // 获取开关状态
     const { api_base_url, product_id, device_name, auth_info } = this.config;
+    if (!auth_info || !product_id || !device_name) return; // 未配置时不发送 OneNET 请求
     // 显示加载提示框
     wx.showLoading({
       title: '正在执行...', // 提示文字

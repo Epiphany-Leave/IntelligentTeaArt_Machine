@@ -78,6 +78,39 @@ IntelligentTeaArt_Machine/
 - **想改手机端：** [微信小程序目录](02_Software/03_wxxcx)。
 - **想看整机结构：** [机械设计目录](03_Mechanical)，其中包含 `装配体1.SLDASM`、`装配体1.STEP` 和 `kongfu tea.SLDASM` 等文件。
 
+## 联网前需要自行提供的配置
+
+仓库中的真实 Wi-Fi 密码、OneNET token、天气 API key 及相关密钥副本已移除，配置默认留空。**不填写时，tea3 固件跳过联网，小程序跳过对应的云端请求。** 原有通信和界面功能代码保留，填写自己的有效配置后再联调。
+
+### 1. STM32 固件：Wi-Fi 与 OneNET MQTT
+
+在 [tea3 的 wifi.c](02_Software/01_Source_Code/tea3/MDK-ARM/Middlewares/WIFI/wifi.c) 顶部配置：
+
+- `WIFI_SSID`：自己的 **2.4GHz** Wi-Fi 名称。
+- `WIFI_PASSWORD`：该 Wi-Fi 的密码。
+- `ONENET_MQTT_PRODUCT_ID`、`ONENET_MQTT_DEVICE_NAME`：自己的 OneNET 产品 ID 和设备名称。
+- `ONENET_MQTT_TOKEN`：为该设备生成的 **MQTT 设备鉴权 token**，注意资源路径、权限和有效期。
+
+这些宏使用 `#ifndef` 包装，可以由本地构建环境的预处理宏提供 C 字符串值，例如通过 Keil 的项目预处理宏配置注入；也可以仅在本机填写空字符串进行调试。不要提交填入真实值的源码、工程配置或包含凭据的固件产物。换用旧版 tea2 时，Wi-Fi 入口为 [commond.h](02_Software/01_Source_Code/tea2/MDK-ARM/APP/commond.h) 中的 `SSID` 和 `PASS`；该版本的云端示例与 tea3 不同，需按自身工程调试。
+
+### 2. 微信小程序：OneNET HTTP 鉴权与天气 API
+
+在 [pages/index/index.js](02_Software/03_wxxcx/pages/index/index.js) 中，本地调试需要填写：
+
+- `config.auth_info`：自己的 **OneNET HTTP API 鉴权 token**。它与固件的 MQTT 设备 token 用途不同，不要混用。
+- `config.product_id`、`config.device_name`：与固件对应的产品 ID、设备名称。
+- `fetchWeatherData()` 中的 `API_KEY`：自己的 **心知天气 API key**，用于天气和空气质量接口；接口权限取决于自己的服务开通情况。
+
+用微信开发者工具导入 `02_Software/03_wxxcx`，使用自己的小程序配置，并按实际服务设置合法请求域名。只在受控的本地环境调试，不要提交填入 token 或 key 的文件。
+
+**小程序是客户端，无法安全隐藏 API 密钥。** 把密钥移到另一个 JS 文件、环境变量或本地存储，最终提供给客户端后仍可能被提取。生产环境应由自己的服务端保存 OneNET 鉴权信息和天气 API key，代理请求并校验用户/设备权限；不要把长期或高权限的鉴权 token 下发给客户端。
+
+### 3. 辅助工具与泄露后的处理
+
+[AT 指令示例](02_Software/01_Source_Code/AT指令.txt) 仅保留占位符；[OneNET 配置说明](02_Software/01_Source_Code/onenet.txt) 不再保存真实密钥。如需本地生成 token，将 [config.example.ini](04_Tools/config.example.ini) 复制为同目录的 `config.ini`，再自行填写资源路径、有效期和对应密钥。生成的 `config.ini`、`Token.log` 已被忽略，请勿强制提交；使用辅助程序前请自行确认来源可信。
+
+删除当前文件中的凭据**不会清除 Git 历史、已有克隆或缓存**。曾公开且仍在使用的 Wi-Fi 密码、OneNET token、用户 AccessKey / 设备密钥和天气 API key 应在对应路由器或平台更换、撤销或重新生成。本次代码清理没有更改任何平台账户、替换实际凭据或重写 Git 历史。
+
 ## 一起改进
 
 欢迎通过 [Issues](https://github.com/Epiphany-Leave/IntelligentTeaArt_Machine/issues) 分享问题、复现记录和改进想法，也欢迎提交 Pull Request。

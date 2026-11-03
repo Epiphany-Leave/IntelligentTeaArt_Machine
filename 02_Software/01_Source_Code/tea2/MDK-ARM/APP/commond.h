@@ -41,14 +41,18 @@
 #define USART2_TXBUFF_SIZE   1024
 #define USART2_RXBUFF_SIZE   1024
 
-#define  PRODUCTKEY           ""                                        		//²úÆ·ID
-#define  DEVICENAME           ""                                               	//Éè±¸Ãû  
-#define  DEVICESECRE          ""                   		//Éè±¸ÃØÔ¿   
-#define  P_TOPIC_NAME         ""    	//ĞèÒª·¢²¼µÄÖ÷Ìâ£¬¼´Éè±¸·¢²¼µ½ÔÆ¶Ë
-#define  S_TOPIC_NAME         ""   	//ĞèÒª¶©ÔÄµÄÖ÷Ìâ£¬¼´ÔÆ¶Ë·¢²¼µ½Éè±¸  
+#define  PRODUCTKEY           ""                                        		//äº§å“ID
+#define  DEVICENAME           ""                                               	//è®¾å¤‡å  
+#define  DEVICESECRE          ""                   		//è®¾å¤‡ç§˜é’¥   
+#define  P_TOPIC_NAME         ""    	//éœ€è¦å‘å¸ƒçš„ä¸»é¢˜ï¼Œå³è®¾å¤‡å‘å¸ƒåˆ°äº‘ç«¯
+#define  S_TOPIC_NAME         ""   	//éœ€è¦è®¢é˜…çš„ä¸»é¢˜ï¼Œå³äº‘ç«¯å‘å¸ƒåˆ°è®¾å¤‡  
 
-#define SSID   "YSX"              //Â·ÓÉÆ÷SSIDÃû³Æ   2.4G   
-#define PASS   "Ysx200423"                 //Â·ÓÉÆ÷ÃÜÂë
+#ifndef SSID
+#define SSID "" // æ—§ç‰ˆ tea2ï¼šå¤–éƒ¨æä¾› 2.4GHz Wi-Fi åç§°ï¼Œä¸è¦æäº¤çœŸå®é…ç½®
+#endif
+#ifndef PASS
+#define PASS "" // æ—§ç‰ˆ tea2ï¼šå¤–éƒ¨æä¾› Wi-Fi å¯†ç ï¼Œä¸è¦æäº¤çœŸå®å¯†ç 
+#endif
 
 #if USART2_RX_ENABLE
 extern volatile uint8_t Usart2_RxCompleted;

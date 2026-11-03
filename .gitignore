@@ -22,3 +22,7 @@
 # IDE
 *.uvgui.*
 *.uvguix.*
+
+# 本地鉴权配置与 token 生成日志（只提交无凭据的示例）
+/04_Tools/config.ini
+/04_Tools/Token.log
