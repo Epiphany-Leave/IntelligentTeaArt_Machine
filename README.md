@@ -10,7 +10,7 @@
 
 > 实物照片来自本仓库。[查看更多角度](05_Information/电子版照片)
 >
-> 本项目适合学习、实验和二次制作。仓库包含多个开发阶段的工程，复现时需要按实际硬件调试；下文会说明已有内容和仍需完善的部分。
+> 本项目适合学习、实验和二次制作。主控使用 `tea` 工程，另有参考工程和 AI 实验，复现时需要按实际硬件调试；下文会说明已有内容和仍需完善的部分。
 
 ## 它有什么用？
 
@@ -53,9 +53,7 @@ IntelligentTeaArt_Machine/
 ├── 02_Software/
 │   ├── 00_Ref/test2/              # 参考工程，含步进电机控制说明
 │   ├── 01_Source_Code/
-│   │   ├── tea1/                  # 茶艺机控制工程之一
-│   │   ├── tea2/                  # 茶艺机控制工程之一
-│   │   ├── tea3/                  # 含茶艺动作编排、串口屏与联网代码
+│   │   ├── tea/                   # 当前主控工程：茶艺动作编排、串口屏与联网代码
 │   │   ├── EdgeAI/                # 传感器采样与 NanoEdge AI 分类实验
 │   │   ├── ai/                    # AI 库、模型相关文件与说明
 │   │   └── 移植HAL库/             # HAL 库移植笔记及配图
@@ -69,29 +67,33 @@ IntelligentTeaArt_Machine/
 └── README.md                     # 项目介绍与入门指引
 ```
 
+当前主控统一放在 `02_Software/01_Source_Code/tea/`。历史主控版本已从当前目录移除；`00_Ref/test2/` 仍作为独立参考工程保留。
+
+开发入口：用 Keil 打开 [tea/MDK-ARM/tea2.uvprojx](02_Software/01_Source_Code/tea/MDK-ARM/tea2.uvprojx)，用 STM32CubeMX 打开 [tea/tea2.ioc](02_Software/01_Source_Code/tea/tea2.ioc)。这两个文件及内部构建目标暂沿用 `tea2` 名称，均属于当前 `tea` 工程，不是历史版本目录。使用随附 VS Code 配置时，请打开 `tea/MDK-ARM/` 文件夹；头文件路径相对于该文件夹解析。
+
 常用入口：
 
 - **想看电路怎么接：** [电路图与工程](01_Hardware/01_Project)。
-- **想改泡茶动作：** [tea3 的 app.c](02_Software/01_Source_Code/tea3/MDK-ARM/APP/app.c) 中的动作表；[commond.h](02_Software/01_Source_Code/tea3/MDK-ARM/APP/commond.h) 中的舵机位置参数。
-- **想看动作何时执行：** [任务调度 TaskList.c](02_Software/01_Source_Code/tea3/MDK-ARM/TimePiece/TaskList.c)。
+- **想改泡茶动作：** [tea 的 app.c](02_Software/01_Source_Code/tea/MDK-ARM/APP/app.c) 中的动作表；[commond.h](02_Software/01_Source_Code/tea/MDK-ARM/APP/commond.h) 中的舵机位置参数。
+- **想看动作何时执行：** [任务调度 TaskList.c](02_Software/01_Source_Code/tea/MDK-ARM/TimePiece/TaskList.c)。
 - **想改机器上的界面：** [串口屏 UI 目录](02_Software/02_UI)。
 - **想改手机端：** [微信小程序目录](02_Software/03_wxxcx)。
 - **想看整机结构：** [机械设计目录](03_Mechanical)，其中包含 `装配体1.SLDASM`、`装配体1.STEP` 和 `kongfu tea.SLDASM` 等文件。
 
 ## 联网前需要自行提供的配置
 
-仓库中的真实 Wi-Fi 密码、OneNET token、天气 API key 及相关密钥副本已移除，配置默认留空。**不填写时，tea3 固件跳过联网，小程序跳过对应的云端请求。** 原有通信和界面功能代码保留，填写自己的有效配置后再联调。
+仓库中的真实 Wi-Fi 密码、OneNET token、天气 API key 及相关密钥副本已移除，配置默认留空。**不填写时，tea 固件跳过联网，小程序跳过对应的云端请求。** 原有通信和界面功能代码保留，填写自己的有效配置后再联调。
 
 ### 1. STM32 固件：Wi-Fi 与 OneNET MQTT
 
-在 [tea3 的 wifi.c](02_Software/01_Source_Code/tea3/MDK-ARM/Middlewares/WIFI/wifi.c) 顶部配置：
+在 [tea 的 wifi.c](02_Software/01_Source_Code/tea/MDK-ARM/Middlewares/WIFI/wifi.c) 顶部配置：
 
 - `WIFI_SSID`：自己的 **2.4GHz** Wi-Fi 名称。
 - `WIFI_PASSWORD`：该 Wi-Fi 的密码。
 - `ONENET_MQTT_PRODUCT_ID`、`ONENET_MQTT_DEVICE_NAME`：自己的 OneNET 产品 ID 和设备名称。
 - `ONENET_MQTT_TOKEN`：为该设备生成的 **MQTT 设备鉴权 token**，注意资源路径、权限和有效期。
 
-这些宏使用 `#ifndef` 包装，可以由本地构建环境的预处理宏提供 C 字符串值，例如通过 Keil 的项目预处理宏配置注入；也可以仅在本机填写空字符串进行调试。不要提交填入真实值的源码、工程配置或包含凭据的固件产物。换用旧版 tea2 时，Wi-Fi 入口为 [commond.h](02_Software/01_Source_Code/tea2/MDK-ARM/APP/commond.h) 中的 `SSID` 和 `PASS`；该版本的云端示例与 tea3 不同，需按自身工程调试。
+这些宏使用 `#ifndef` 包装，可以由本地构建环境的预处理宏提供 C 字符串值，例如通过 Keil 的项目预处理宏配置注入；也可以仅在本机填写空字符串进行调试。不要提交填入真实值的源码、工程配置或包含凭据的固件产物。
 
 ### 2. 微信小程序：OneNET HTTP 鉴权与天气 API
 

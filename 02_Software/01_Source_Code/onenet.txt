@@ -2,7 +2,7 @@ OneNET 联网配置说明（真实凭据已移除）
 
 请在自己的 OneNET 项目中准备：
 - 产品 ID、设备名称：固件与微信小程序保持一致。
-- 设备级 MQTT token：供 tea3 的 ONENET_MQTT_TOKEN 使用。
+- 设备级 MQTT token：供 tea 的 ONENET_MQTT_TOKEN 使用。
 - HTTP API 鉴权 token：供小程序的 auth_info 使用，不要与 MQTT token 混用。
 - 生成 token 所需的用户 AccessKey / 设备密钥：只在受控本地环境或服务端保存。
 
